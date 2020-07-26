@@ -1,0 +1,10 @@
+#Don't track any of these
+Include/
+Lib/
+Scripts/
+
+*.jpg
+*.env
+*.exe
+*.cfg
+*.txt
