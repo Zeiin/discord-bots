@@ -21,10 +21,15 @@ class customClient(discord.Client):
         if message.author == CLIENT.user:
             return #--No self-loops
 
-        pattern = "(?i)(.*)(crayon eater+)(.*)"
-        prog = re.compile(pattern)
-        result = prog.match(message.content)
-        if result != None:
+        DmgPattern = "(?i)(.*)(crayon eater+)(.*)"
+        DmgRegEx = re.compile(DmgPattern)
+        DmgMatch = DmgRegEx.match(message.content)
+
+        UrlPattern = "((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*"
+        UrlRegEx = re.compile(UrlPattern)
+        UrlMatch = UrlRegEx.match(message.content)
+
+        if DmgMatch != None:
             await message.guild.me.edit(nick="Dmg04")
             with open(AvatarFILE, 'rb') as f:
                 image = f.read()
@@ -42,7 +47,8 @@ class customClient(discord.Client):
             f.close()
             await message.channel.send("The Mystery Returns.")
 
-        if len(message.attachments) > 0:
+
+        if len(message.attachments) > 0 or UrlMatch != None:
             await message.add_reaction('🔁')                         #retweet :)
             await message.add_reaction('❤')                         #like :)
 
