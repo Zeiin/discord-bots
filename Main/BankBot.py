@@ -133,7 +133,7 @@ class customClient(discord.Client):
                     afterChecker.truncate()                           #All this just to ensure we dont have a new line at the end of our file..
         """
         if message.content.find("!remind") == 0 or message.content.find("!imagine") ==0 :
-            targetGuildName = message.guild.name.replace(" ", "")
+            targetGuildName = message.guild.name.replace(" ", "").replace("\'","")
             if message.content.find("!remind") == 0:
                 targetCacheFile =  f'{targetGuildName}/reminderCache.txt'
                 targetWord = "remind"
