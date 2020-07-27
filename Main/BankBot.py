@@ -95,7 +95,8 @@ class customClient(discord.Client):
                         print(f'{curCHANNEL.name} is of type {curCHANNEL.type}\n')
                         async for curMESSAGE in curCHANNEL.history(limit=None, after=afterVal): #for every message in this channel's history
                             if curMESSAGE.content.lower().find(targetWord) >= 0 and curMESSAGE.content.lower().find("!") != 0 and curMESSAGE.author != CLIENT.user:
-                                curVal = f'{curMESSAGE.author.mention} {curMESSAGE.content} [![{curMESSAGE.created_at}[![' #Formats the beginning of the string to mention the user and post the reminder itself
+                                curMESSAGEstripped = curMESSAGE.content.replace("\n", " ")
+                                curVal = f'{curMESSAGE.author.mention} {curMESSAGEstripped} [![{curMESSAGE.created_at}[![' #Formats the beginning of the string to mention the user and post the reminder itself
                                 for attachment in curMESSAGE.attachments:                     #check for files attached
                                     random.seed()                                             #random seed so duplicate file names almost never happen
                                     filName = f'{targetGuildName}/attachments/{random.randint(1,1000)}{attachment.filename}' #append random value to file name
