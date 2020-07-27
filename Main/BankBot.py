@@ -51,16 +51,30 @@ class customClient(discord.Client):
         if message.content.lower().find("all my homies") != -1:
             await message.add_reaction('🔁')                         # retweet in solidarity with ur homie
 
-        if message.content == "!cachereminders":                    #we cache reminders every so often instead of reading the entire message history every time we want to find a reminder
+        if message.content == "!cachereminders" or message.content == "!cacheimagines":                    #we cache reminders every so often instead of reading the entire message history every time we want to find a reminder
             curGUILD = message.guild                                #currentGuild to cache from
+
+            targetGuildName = curGUILD.name.replace(" ", "")
+            if message.content == "!cachereminders":
+                targetCacheFile = targetGuildName+ "/reminderCache.txt"
+                targetCacheFile2 = targetGuildName+ "/reminderCache2.txt"
+                targetCacheFile3 = targetGuildName+ "/reminderCache3.txt"
+                targetWord="reminder"
+                print(f'we chose to cache reminders \n')
+            elif message.content == "!cacheimagines":
+                targetCacheFile = targetGuildName + "/imagineCache.txt"
+                targetCacheFile2 = targetGuildName + "/imagineCache2.txt"
+                targetCacheFile3 = targetGuildName + "/imagineCache3.txt"
+                targetWord="imagine"
+                print(f'we chose to cache imagines \n')
             try:                                                    #EAFP principle in python, try to make the dir and if error aside from already exists occurs raise, otherwise ignore
-                os.makedirs(curGUILD.name.replace(" ", "") + "/attachments")
+                os.makedirs(targetGuildName + "/attachments")
             except OSError as e:
                 if e.errno != errno.EEXIST:                         #Only raise exception if the error is NOT that the directory already exists
                     raise
             afterVal = None
             try:
-                with open(curGUILD.name.replace(" ", "") + "/reminderCache.txt", "r") as dateCheck: #pull the most recent reminder (always the first reminder in file)
+                with open(targetCacheFile, "r") as dateCheck: #pull the most recent reminder (always the first reminder in file)
                     first_line = dateCheck.readline()
                     print(first_line)
                     afterValTemp = re.findall('\[\!\[(.*?)\[\!\[', first_line)                      #date format surrounded by [![ for a guarateed disambiguation
@@ -69,22 +83,22 @@ class customClient(discord.Client):
                         print(f'LAST MESSAGE DATE RECORDED: {afterValTemp[0]}')
                     else:
                         afterVal = None
-                if afterVal != None:                                                            # we now want our current file shoved elsewhere
-                    os.rename(curGUILD.name.replace(" ", "") + "/reminderCache.txt",            # so we can start writing our new reminders and add the old stuff under
-                      curGUILD.name.replace(" ", "") + "/reminderCache2.txt")                   #to maintain our first line = most recent reminder assumption
+                if afterVal != None:                                                           # we now want our current file shoved elsewhere
+                    os.rename(targetCacheFile,targetCacheFile2)                                 # so we can start writing our new reminders and add the old stuff under
+                                                                                               #to maintain our first line = most recent reminder assumption
             except OSError as e:
                 if e.errno != errno.ENOENT:
                     raise
-            with open(curGUILD.name.replace(" ", "") + "/reminderCache.txt", encoding="utf8", mode="w") as outp: #keep reminder caches seperated by folders named after each server - special characters probably not handled here..
+            with open(targetCacheFile, encoding="utf8", mode="w") as outp: #keep reminder caches seperated by folders named after each server - special characters probably not handled here..
                 for curCHANNEL in curGUILD.channels:
                     if curCHANNEL.type is discord.ChannelType.text: #only loop through text channels
                         print(f'{curCHANNEL.name} is of type {curCHANNEL.type}\n')
                         async for curMESSAGE in curCHANNEL.history(limit=None, after=afterVal): #for every message in this channel's history
-                            if curMESSAGE.content.lower().find("reminder") >= 0 and curMESSAGE.content.lower().find("!") != 0 and curMESSAGE.author != CLIENT.user:
+                            if curMESSAGE.content.lower().find(targetWord) >= 0 and curMESSAGE.content.lower().find("!") != 0 and curMESSAGE.author != CLIENT.user:
                                 curVal = f'{curMESSAGE.author.mention} {curMESSAGE.content} [![{curMESSAGE.created_at}[![' #Formats the beginning of the string to mention the user and post the reminder itself
                                 for attachment in curMESSAGE.attachments:                     #check for files attached
                                     random.seed()                                             #random seed so duplicate file names almost never happen
-                                    filName = f'{curGUILD.name.replace(" ","")}/attachments/{random.randint(1,1000)}{attachment.filename}' #append random value to file name
+                                    filName = f'{targetGuildName}/attachments/{random.randint(1,1000)}{attachment.filename}' #append random value to file name
                                     curVal += (f'|{filName}|+')                               #attaches a tag to the reminder line that indicates we have a file attachment
                                     await attachment.save(filName)                            #save the file-like object, must be converted to discord file on use
                                 curVal += "\n"
@@ -93,19 +107,22 @@ class customClient(discord.Client):
                     else:
                         print(f'{curCHANNEL.name} is of type {curCHANNEL.type}\n')
             if afterVal != None:
-                os.rename(curGUILD.name.replace(" ", "")+"/reminderCache.txt",
-                          curGUILD.name.replace(" ", "")+"/reminderCache3.txt")
-                with open(curGUILD.name.replace(" ", "")+"/reminderCache.txt", mode="a") as mostRecentReminders:
-                    with FileReadBackwards(curGUILD.name.replace(" ", "")+"/reminderCache3.txt", encoding="utf-8") as reversedFile:
-                        for reversedLines in reversedFile:
-                            mostRecentReminders.write(reversedLines+"\n")
-                with open(curGUILD.name.replace(" ", "")+"/reminderCache.txt", mode="a") as combineFiles:
-                    with open(curGUILD.name.replace(" ", "")+"/reminderCache2.txt") as sideFile:
-                        for sideLine in sideFile:
-                            combineFiles.write(sideLine)
-                os.remove(curGUILD.name.replace(" ", "")+"/reminderCache2.txt")
-                os.remove(curGUILD.name.replace(" ", "")+"/reminderCache3.txt")
-            with open(curGUILD.name.replace(" ", "")+"/reminderCache.txt", mode="r+") as afterChecker: #remove new line at the end
+                if(os.stat(targetCacheFile).st_size > 0):
+                    os.rename(targetCacheFile,targetCacheFile3)
+                    with open(targetCacheFile, mode="a") as mostRecentReminders:
+                        with FileReadBackwards(targetCacheFile3, encoding="utf-8") as reversedFile:
+                            for reversedLines in reversedFile:
+                                mostRecentReminders.write(reversedLines+"\n")
+                    with open(targetCacheFile, mode="a") as combineFiles:
+                        with open(targetCacheFile2) as sideFile:
+                            for sideLine in sideFile:
+                                combineFiles.write(sideLine)
+                    os.remove(targetCacheFile2)
+                    os.remove(targetCacheFile3)
+                else:
+                    os.remove(targetCacheFile)
+                    os.rename(targetCacheFile2, targetCacheFile)
+        """    with open(targetCacheFile, mode="r+") as afterChecker: #remove new line at the end
                 afterChecker.seek(0, os.SEEK_END)                     # Move the pointer (similar to a cursor in a text editor) to the end of the file
                 pos = afterChecker.tell() - 1                         # This code means the following code skips the very last character in the file -
                 while pos > 0 and afterChecker.read(1) != "\n":       # Read each character in the file one at a time from the penultimate
@@ -114,12 +131,31 @@ class customClient(discord.Client):
                 if pos > 0:                                           # So long as we're not at the start of the file, delete all the characters ahead
                     afterChecker.seek(pos, os.SEEK_SET)
                     afterChecker.truncate()                           #All this just to ensure we dont have a new line at the end of our file..
-
-        if message.content == "!reminder":
-            with open(message.guild.name.replace(" ", "") + "/reminderCache.txt", encoding="utf8") as reminp:        #always pass encoding in when opening a file, or else emojis and special chars fail and shit your text up
-                lines = reminp.readlines()
-                random_line = random.randint(0, len(lines) - 1)     #ensures our random line is within proper bounds, no OOB tricks here speedrunners
-                response = lines[random_line]                       #pick a random line :)
+        """
+        if message.content.find("!remind") == 0 or message.content.find("!imagine") ==0 :
+            targetGuildName = message.guild.name.replace(" ", "")
+            if message.content.find("!remind") == 0:
+                targetCacheFile =  f'{targetGuildName}/reminderCache.txt'
+                targetWord = "remind"
+            if message.content.find("!imagine") == 0:
+                targetCacheFile = targetGuildName + "/imagineCache.txt"
+                targetWord = "imagine"
+            with open(targetCacheFile, encoding="utf8") as reminp:        #always pass encoding in when opening a file, or else emojis and special chars fail and shit your text up
+                response = ""
+                if(message.content.find("me") == -1):                     #filter by all messages or just ones made by author
+                    while response == "" or response == "\n":
+                        lines = reminp.readlines()
+                        random_line = random.randint(0, len(lines) - 1)     #ensures our random line is within proper bounds, no OOB tricks here speedrunners
+                        response = lines[random_line]                       #pick a random line :)
+                else:
+                    validMessages = []                                      #initialize list to append valid messages to
+                    for allLines in reminp:
+                        if allLines.find(message.author.mention) == 0:      #check if current line mentions same person that used command
+                            validMessages.append(allLines)                  #if so, add to valid list
+                    if len(validMessages) > 0:                              #only generate a response if the user has a valid message
+                        response = random.choice(validMessages)
+                    else:
+                        response = f'{message.author.mention} Sorry, I could not find a valid message that includes the word **{targetWord}** to use for this command'
                 attachmentsList = re.findall('\|(.*?)\|', response) #gets a list of all attachments possible, assumption based on prior format: all file names are between | and |
                 fileObjectList = []
                 for names in attachmentsList:
