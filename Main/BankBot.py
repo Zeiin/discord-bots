@@ -53,7 +53,7 @@ class customClient(discord.Client):
         if message.content == "!cachereminders" or message.content == "!cacheimagines":                    #we cache reminders every so often instead of reading the entire message history every time we want to find a reminder
             curGUILD = message.guild                                #currentGuild to cache from
 
-            targetGuildName = curGUILD.name.replace(" ", "")
+            targetGuildName = curGUILD.name.replace(" ", "").replace("\'","")
             if message.content == "!cachereminders":
                 targetCacheFile = targetGuildName+ "/reminderCache.txt"
                 targetCacheFile2 = targetGuildName+ "/reminderCache2.txt"
