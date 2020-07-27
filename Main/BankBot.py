@@ -51,11 +51,11 @@ class customClient(discord.Client):
         if message.content == "!cachereminders":                    #we cache reminders every so often instead of reading the entire message history every time we want to find a reminder
             curGUILD = message.guild                                #currentGuild to cache from
             try:                                                    #EAFP principle in python, try to make the dir and if error aside from already exists occurs raise, otherwise ignore
-                os.makedirs(curGUILD.name + "\\attachments")
+                os.makedirs(curGUILD.name.replace(" ", "") + "\\attachments")
             except OSError as e:
                 if e.errno != errno.EEXIST:                         #Only raise exception if the error is NOT that the directory already exists
                     raise
-            with open(curGUILD.name + "\\reminderCache.txt", encoding="utf8", mode="a") as outp: #keep reminder caches seperated by folders named after each server - special characters probably not handled here..
+            with open(curGUILD.name.replace(" ", "") + "\\reminderCache.txt", encoding="utf8", mode="a") as outp: #keep reminder caches seperated by folders named after each server - special characters probably not handled here..
                 for curCHANNEL in curGUILD.channels:
                     if curCHANNEL.type is discord.ChannelType.text: #only loop through text channels
                         print(f'{curCHANNEL.name} is of type {curCHANNEL.type}\n')
@@ -64,7 +64,7 @@ class customClient(discord.Client):
                                 curVal = f'{curMESSAGE.author.mention} {curMESSAGE.content} ' #Formats the beginning of the string to mention the user and post the reminder itself
                                 for attachment in curMESSAGE.attachments:                     #check for files attached
                                     random.seed()                                             #random seed so duplicate file names almost never happen
-                                    filName = f'{curGUILD}\\attachments\\{random.randint(1,1000)}{attachment.filename}' #append random value to file name
+                                    filName = f'{curGUILD.name.replace(" ","")}\\attachments\\{random.randint(1,1000)}{attachment.filename}' #append random value to file name
                                     curVal += (f'|{filName}|+')                               #attaches a tag to the reminder line that indicates we have a file attachment
                                     await attachment.save(filName)                            #save the file-like object, must be converted to discord file on use
                                 curVal += "\n"
