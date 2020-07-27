@@ -2,9 +2,12 @@
 Include/
 Lib/
 Scripts/
+*/attachments
 
 *.jpg
 *.env
 *.exe
 *.cfg
 *.txt
+*.png
+*.mp4
