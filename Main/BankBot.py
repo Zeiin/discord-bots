@@ -58,7 +58,8 @@ class customClient(discord.Client):
             with open(curGUILD.name + "\\reminderCache.txt", encoding="utf8", mode="a") as outp: #keep reminder caches seperated by folders named after each server - special characters probably not handled here..
                 for curCHANNEL in curGUILD.channels:
                     if curCHANNEL.type is discord.ChannelType.text: #only loop through text channels
-                        async for curMESSAGE in curCHANNEL.history(): #for every message in this channel's history
+                        print(f'{curCHANNEL.name} is of type {curCHANNEL.type}\n')
+                        async for curMESSAGE in curCHANNEL.history(limit=None): #for every message in this channel's history
                             if curMESSAGE.content.lower().find("reminder") >= 0 and curMESSAGE.content.lower().find("!") != 0 and curMESSAGE.author != CLIENT.user:
                                 curVal = f'{curMESSAGE.author.mention} {curMESSAGE.content} ' #Formats the beginning of the string to mention the user and post the reminder itself
                                 for attachment in curMESSAGE.attachments:                     #check for files attached
