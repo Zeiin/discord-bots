@@ -47,13 +47,5 @@ class customClient(discord.Client):
             f.close()
             await message.channel.send("The Mystery Returns.")
 
-
-        if len(message.attachments) > 0 or UrlMatch != None:
-            await message.add_reaction('🔁')                         #retweet :)
-            await message.add_reaction('❤')                         #like :)
-
-        if message.content.lower().find("all my homies") != -1:
-            await message.add_reaction('🔁')  # retweet :)
-
 CLIENT = customClient()
 CLIENT.run(TOKEN)                   #turn bot on -- buy the bot dinner prior to this step

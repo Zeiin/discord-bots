@@ -28,17 +28,16 @@ class customClient(discord.Client):
     async def on_message(self, message):
         if message.author == CLIENT.user:
             return #--No self-loops
-
-        pattern = "(.*)(99!+)(.*)"
-        prog = re.compile(pattern)
-        result = prog.match(message.content)
-        if result != None:
-            with open(wordBankFile, encoding="utf8") as inp:        #always pass encoding in when opening a file, or else emojis and special chars fail and shit your text up
-                lines = inp.readlines()
-                random_line = random.randint(0, len(lines) - 1)     #ensures our random line is within proper bounds, no OOB tricks here speedrunners
-                response = lines[random_line]                       #pick a random line :)
-            await message.channel.send(response)                    #sends the random line, all coroutines must be awaited? i think at least the ones I use do.
-            inp.close()
+        if(message.guild.name == gServerName):
+            pattern = "(.*)(99!+)(.*)"
+            prog = re.compile(pattern)
+            result = prog.match(message.content)
+            if result != None:
+                with open(wordBankFile, encoding="utf8") as inp:        #always pass encoding in when opening a file, or else emojis and special chars fail and shit your text up
+                    lines = inp.readlines()
+                    random_line = random.randint(0, len(lines) - 1)     #ensures our random line is within proper bounds, no OOB tricks here speedrunners
+                    response = lines[random_line]                       #pick a random line :)
+                await message.channel.send(response)                    #sends the random line, all coroutines must be awaited? i think at least the ones I use do.
 
         UrlPattern = "((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*" #don't fucking ask
         UrlRegEx = re.compile(UrlPattern)
