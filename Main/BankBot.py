@@ -237,11 +237,12 @@ class customClient(discord.Client):
                         response = random.choice(validMessages)
                     else:
                         response = f'{message.author.mention} Sorry, I could not find a valid message that includes the word **{targetWord}** to use for this command'
-                attachmentsList = re.findall('\|(.*?)\|', response) #gets a list of all attachments possible, assumption based on prior format: all file names are between | and |
-                fileObjectList = []
-                for names in attachmentsList:
-                    fileObjectList.append(discord.File(names))      #must convert file-like objects to discord files before appending them to the file list
-                responseFormatted = response.partition("[![")         #remove the attachment tag before posting the reminder
+            attachmentsList = re.findall('\|(.*?)\|', response) #gets a list of all attachments possible, assumption based on prior format: all file names are between | and |
+            fileObjectList = []
+            for names in attachmentsList:
+                fileObjectList.append(discord.File(names))      #must convert file-like objects to discord files before appending them to the file list
+            responseFormatted = response
+            responseFormatted = response.partition("[![")         #remove the attachment tag before posting the reminder
             await message.channel.send(content=responseFormatted[0], files=fileObjectList)  #syntax for sending a message with both text and files
 
 CLIENT = customClient()
