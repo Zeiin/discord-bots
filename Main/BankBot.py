@@ -106,6 +106,7 @@ class customClient(discord.Client):
                                     nounFil.write(f'\n{val}')
                         elif appendFormatted[2] != "":
                             nounFil.write(f'\n{appendFormatted[2]}')
+                await message.add_reaction('✅')
             """"   
                splitContent = message.content.split(" ")
                splitIterator = iter(splitContent)
@@ -206,6 +207,7 @@ class customClient(discord.Client):
                 else:
                     os.remove(targetCacheFile)
                     os.rename(targetCacheFile2, targetCacheFile)
+            await message.add_reaction('✅')
         """    with open(targetCacheFile, mode="r+") as afterChecker: #remove new line at the end
                 afterChecker.seek(0, os.SEEK_END)                     # Move the pointer (similar to a cursor in a text editor) to the end of the file
                 pos = afterChecker.tell() - 1                         # This code means the following code skips the very last character in the file -
