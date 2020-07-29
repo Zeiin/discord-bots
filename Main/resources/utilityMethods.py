@@ -1,6 +1,7 @@
 import sys
 import random
 import re
+import errno
 import os, os.path
 import discord
 
@@ -68,12 +69,16 @@ class Utilities:
         targetCacheFile2 = f'{targetGuildName}/{type}Cache2.txt'
         targetCacheFile3 = f'{targetGuildName}/{type}Cache3.txt'
         print(f'we chose to cache {type} from {targetGuildName} into {targetCacheFile}\n')
-
+        print(f'1')
         try:                                            # EAFP principle in python, try to make the dir and if error aside from already exists occurs raise, otherwise ignore
             os.makedirs(targetGuildName + "/attachments")
+            print(f'2')
         except OSError as e:
             if e.errno != errno.EEXIST:                 # Only raise exception if the error is NOT that the directory already exists
+                print(f'4')
                 raise
+            else:
+                print(f'3')
 
         afterVal = None
         print(f'1')
@@ -98,8 +103,9 @@ class Utilities:
                 if curCHANNEL.type is discord.ChannelType.text:  # only loop through text channels
                     print(f'{curCHANNEL.name} is of type {curCHANNEL.type}\n')
                     async for curMESSAGE in curCHANNEL.history(limit=None,after=afterVal):  # for every message in this channel's history
-                        if curMESSAGE.content.lower().find(type) >= 0 and curMESSAGE.content.lower().find("!") != 0 and curMESSAGE.author != CLIENT.user:
+                        if curMESSAGE.content.lower().find(type) >= 0 and curMESSAGE.content.lower().find("!") != 0 and curMESSAGE.author != message.guild.me:
                             curMESSAGEstripped = curMESSAGE.content.replace("\n", " ")
+                            print(f'{curMESSAGEstripped}\n')
                             curVal = f'{curMESSAGE.author.mention} {curMESSAGEstripped} [![{curMESSAGE.created_at}[!['  # Formats the beginning of the string to mention the user and post the reminder itself
                             for attachment in curMESSAGE.attachments:  # check for files attached
                                 random.seed()  # random seed so duplicate file names almost never happen

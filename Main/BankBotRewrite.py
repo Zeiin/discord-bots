@@ -13,7 +13,7 @@ from resources.utilityMethods import Utilities
 
 load_dotenv()  # loads .env file in the same directory -- use for configs and any changes -- dont edit settings in this file, use the env file
 TOKEN = os.getenv('DISCORD_TOKEN')  # loads PRIVATE discord token that we set as an env variable in the .env file -- this is done so you don't post private token to VCs software i.e github
-gServerName = os.getenv('DISCORD_GUILD')  # guild is an object referencing the server the bot/users are in
+gServerName = os.getenv('DISCORD_GUILD')  # guild is an object referencing the server the bot/users are in, just returning the 'main' server for our worst commands
 adjectiveFile = os.getenv('ADJ_BANK')
 nounFile = os.getenv("NOUN_BANK")
 wordBankFile = os.getenv('WORD_BANK')
@@ -73,12 +73,14 @@ async def on_message(message):
 
     if message.content.lower().find("all my homies") != -1:
         await message.add_reaction('🔁')  # retweet in solidarity with ur homie
-
-    await CLIENT.process_commands(message) #process all the actual commands x)
+    if(message.content.find("cumtown") == -1 ) or (message.content.find("append") == -1) or (message.guild.name == gServerName):
+        await CLIENT.process_commands(message) #process all the actual commands x)
 
 async def convertToEmojiAndReact(ctx, value):
-    numEmojiDict = ['0️⃣', "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
-    for digit in list(value):
+    numEmojiDict = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
+    if(value%11 == 0):
+        value += 1
+    for digit in list(str(value)):
         await ctx.message.add_reaction(numEmojiDict[int(digit)])                #display your cooldown as a reaction :)
 
 
@@ -89,11 +91,10 @@ async def on_command_error(ctx, error):
         numFinder = str(error).split(" ")                                       #error is a type that can be converted to a str thanks to being compatible with send
         for val in numFinder:
             if val.partition(".")[0].isdigit():
-                await convertToEmojiAndReact(ctx, val.partition(".")[0])        #remove any decimal stuff and also any unit (i.e s for seconds)
+                await convertToEmojiAndReact(ctx, int(val.partition(".")[0]))        #remove any decimal stuff and also any unit (i.e s for seconds)
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.channel.send("How about you actually give me an input")
         await ctx.message.add_reaction('❌')
-
 
 @CLIENT.command()
 @commands.cooldown(1, 60, commands.BucketType.user)
@@ -113,30 +114,31 @@ async def appendnoun(ctx, *, arg):
         UTILITIES.appendToFileWeirdly(arg, nounFile)
         await ctx.message.add_reaction('✅')
 
-@CLIENT.command()
+@CLIENT.command(aliases=['remindme'])
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def reminder(ctx):
     reminderData = UTILITIES.pullFromCache(ctx.message, "reminder")
     await ctx.message.channel.send(content=reminderData[0],files=reminderData[1])  # syntax for sending a message with both text and files
 
-@CLIENT.command()
+@CLIENT.command(aliases=['imagineme'])
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def imagine(ctx):
     reminderData = UTILITIES.pullFromCache(ctx.message, "imagine")
     await ctx.message.channel.send(content=reminderData[0],files=reminderData[1])  # syntax for sending a message with both text and files
-
+""" USE BELOW IF YOU WANT TO SEPARATE THE COOLDOWNS OF REMIND/IMAGINE AND REMINDME/IMAGINEME COMMANDS
 @CLIENT.command()
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def remindme(ctx):
-    reminderData = UTILITIES.pullFromCache(ctx.message, "reminder")
-    await ctx.message.channel.send(content=reminderData[0],files=reminderData[1])  # syntax for sending a message with both text and files
+    reminder(ctx)
+    #reminderData = UTILITIES.pullFromCache(ctx.message, "reminder")
+    #await ctx.message.channel.send(content=reminderData[0],files=reminderData[1])  # syntax for sending a message with both text and files
 
 @CLIENT.command()
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def imagineme(ctx):
     reminderData = UTILITIES.pullFromCache(ctx.message, "imagine")
     await ctx.message.channel.send(content=reminderData[0],files=reminderData[1])  # syntax for sending a message with both text and files
-
+"""
 @CLIENT.command()
 async def cachereminders(ctx):
     UTILITIES.populateCache(ctx.message,"reminder")
