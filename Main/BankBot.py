@@ -1,6 +1,7 @@
 import os, os.path
 import discord
 from discord import NotFound
+from discord.ext import commands
 import sys
 import random
 import re
@@ -23,21 +24,35 @@ secretMorphMsg = os.getenv("MORPH_MSG")
 GUILD = None
 
 class customClient(discord.Client):
+    bot = commands.Bot(command_prefix=os.getenv("BOT_PREFIX"))
+
     async def on_ready(self):              #api flags on_ready when the bot connects and all overhead is complete
         #GUILD = next((guild for guild in CLIENT.guilds if guild.name == gServerName), None) #---Base python's way of searching through a list and assigning a value.
         GUILD = discord.utils.find(lambda g: g.name == gServerName, CLIENT.guilds) #-Discord Utility Function for finding a value. Easier to write ig
         print(
             f'{CLIENT.user} is connected to the following guild:\n'   #Confirming where it's connected to. No reason to print its own identity though.
-            f'{GUILD.name}(id: {GUILD.id})'
+            f'{GUILD.name}(id: {GUILD.id})\n'
         )
+
+
+
+    #@commands.cooldown(1, 60, commands.BucketType.user)
+    @bot.command()
+    async def cumtown(ctx):
+        adjectiveChoice = customClient.pullRandomLine(adjectiveFile)
+        nounChoice = customClient.pullRandomLine(nounFile)
+        generatedtown = f'How about {adjectiveChoice} {nounChoice}'
+        print(f'{generatedtown}')
+        await ctx.message.channel.send(response)
+
     def pullRandomLine(self, fileNamei):
         with open(fileNamei, encoding="utf8", mode="r") as inp:
             random.seed()
             retVal = ""
             while retVal == "" or retVal == "\n":
                 inpList = inp.readlines()
-                random_inp = random.randint(0, len(inpList) - 1)
-                retVal = inpList[random_inp]
+                random_inp = random.randint(0, len(inpList) - 1)        #ensures our random line is within proper bounds, no OOB tricks here speedrunners
+                retVal = inpList[random_inp]                            #pick a random line :)
             retVal = retVal.replace("\n", "")
             return retVal
     def generateTownMessage(self):
@@ -46,24 +61,71 @@ class customClient(discord.Client):
         generatedtown = f'How about {adjectiveChoice} {nounChoice}'
         return generatedtown
 
+    async def rollTheDice(self, message):
+        random.seed()
+        randVal = random.randint(1, 1000)
+        if randVal > 995:
+            response = self.generateTownMessage()
+            await message.channel.send(response)
+        if randVal == 2:
+            await message.guild.me.edit(nick=secretMorphName)
+            with open(secretMorph, 'rb') as f:
+                image = f.read()
+            await self.user.edit(avatar=image)
+            f.close()
+            MentionAuth = message.author.mention
+            MorphResponse = f"{MentionAuth} Hello. {secretMorphMsg}"
+            await message.channel.send(MorphResponse)
+
+    """
+    APPEND:
+        If !append includes adj xor noun it will attempt to add the first param after !append to the specificed type
+    """
+    def appendTown(self, message):
+        appendFormatted = message.content.partition(" ")
+        if appendFormatted[0].find("adj") > -1:
+            with open(adjectiveFile, encoding="utf8", mode="a") as adjFile:
+                quoteFinder = re.findall("\'(.*?)\'", appendFormatted[2])
+                if (len(quoteFinder) > 0):
+                    for val in quoteFinder:
+                        if val != "":
+                            val = val.replace("\'", "")
+                            adjFile.write(f'\n{val}')
+                elif appendFormatted[2] != "":
+                    adjFile.write(f'\n{appendFormatted[2]}')
+        elif appendFormatted[0].find("noun") > -1:
+            with open(nounFile, encoding="utf8", mode="a") as nounFil:
+                quoteFinder = re.findall("\'(.*?)\'", appendFormatted[2])
+                if (len(quoteFinder) > 0):
+                    for val in quoteFinder:
+                        if val != "":
+                            val = val.replace("\'", "")
+                            nounFil.write(f'\n{val}')
+                elif appendFormatted[2] != "":
+                    nounFil.write(f'\n{appendFormatted[2]}')
+        """   GENERIC APPEND CODE USING ITERATORS, THIS ORIGINALLY ASSUMED ADJ+NOUN WOULD BE PAIRS i.e first param = adj 2nd = noun, but not good use case
+           splitContent = message.content.split(" ")
+           splitIterator = iter(splitContent)
+           next(splitIterator) #we don't care for the command itself, just the params that come after
+           if splitContent[0] == "!append":
+               with open(adjectiveFile, encoding="utf8", mode="a") as adjFile:
+                   adjVal = next(splitIterator, -1)
+                   if adjVal != -1:
+                       adjFile.write(f'\n{adjVal}')
+                       print(f'{adjVal}\n')
+    
+               with open(nounFile, encoding="utf8", mode="a") as nounFil:
+                   nounVal = next(splitIterator, -1)
+                   if nounVal != -1:
+                       nounFil.write(f'\n{nounVal}')
+                       print(f'{nounVal}\n')
+          """
+
     async def on_message(self, message):
         if message.author == CLIENT.user:
             return #--No self-loops
         if message.guild.name == gServerName:
-            random.seed()
-            randVal = random.randint(1,1000)
-            if randVal > 995:
-                response = self.generateTownMessage()
-                await message.channel.send(response)
-            if randVal == 2:
-                await message.guild.me.edit(nick=secretMorphName)
-                with open(secretMorph, 'rb') as f:
-                    image = f.read()
-                await self.user.edit(avatar=image)
-                f.close()
-                MentionAuth = message.author.mention
-                MorphResponse = f"{MentionAuth} Hello. {secretMorphMsg}"
-                await message.channel.send(MorphResponse)
+            await self.rollTheDice(message)
 
             pattern = "(.*)(99!+)(.*)"
             prog = re.compile(pattern)
@@ -72,58 +134,9 @@ class customClient(discord.Client):
                 with open(wordBankFile, encoding="utf8") as inp:        #always pass encoding in when opening a file, or else emojis and special chars fail and shit your text up
                     lines = inp.readlines()
                     random_line = random.randint(0, len(lines) - 1)     #ensures our random line is within proper bounds, no OOB tricks here speedrunners
-                    response = lines[random_line]                       #pick a random line :)
-                await message.channel.send(response)                    #sends the random line, all coroutines must be awaited? i think at least the ones I use do.
-
-            if message.content == "!cumtown":
-                response = self.generateTownMessage()
+                    response = lines[random_line]                       #pick a random line :) only reason I don't use my predefined method is to not strip text
                 await message.channel.send(response)
-            """APPEND:
-                REMOVED----If just !append, will attempt to add the first param after command to adjectives, and then attempt to add the second param after command to nouns
-                If !append included adj xor noun it will attempt to add the first param after !append to the specificed type
-                REMOVED----If !append included adj AND noun it will act just like !append
-                REMOVED----!append is better for now, but if I ever change append then !appendadjnoun or !appendnounadj will work
-            """
-            if message.content.find("!append") == 0:
-                appendFormatted = message.content.partition(" ")
-                if appendFormatted[0].find("adj") > -1:
-                    with open(adjectiveFile, encoding="utf8", mode="a") as adjFile:
-                        quoteFinder = re.findall("\'(.*?)\'", appendFormatted[2])
-                        if(len(quoteFinder) > 0):
-                            for val in quoteFinder:
-                                if val != "":
-                                    val = val.replace("\'", "")
-                                    adjFile.write(f'\n{val}')
-                        elif appendFormatted[2] != "":
-                                adjFile.write(f'\n{appendFormatted[2]}')
-                elif appendFormatted[0].find("noun") > -1:
-                    with open(nounFile, encoding="utf8", mode="a") as nounFil:
-                        quoteFinder = re.findall("\'(.*?)\'", appendFormatted[2])
-                        if (len(quoteFinder) > 0):
-                            for val in quoteFinder:
-                                if val != "":
-                                    val = val.replace("\'", "")
-                                    nounFil.write(f'\n{val}')
-                        elif appendFormatted[2] != "":
-                            nounFil.write(f'\n{appendFormatted[2]}')
-                await message.add_reaction('✅')
-            """"   
-               splitContent = message.content.split(" ")
-               splitIterator = iter(splitContent)
-               next(splitIterator) #we don't care for the command itself, just the params that come after
-               if splitContent[0] == "!append":
-                   with open(adjectiveFile, encoding="utf8", mode="a") as adjFile:
-                       adjVal = next(splitIterator, -1)
-                       if adjVal != -1:
-                           adjFile.write(f'\n{adjVal}')
-                           print(f'{adjVal}\n')
 
-                   with open(nounFile, encoding="utf8", mode="a") as nounFil:
-                       nounVal = next(splitIterator, -1)
-                       if nounVal != -1:
-                           nounFil.write(f'\n{nounVal}')
-                           print(f'{nounVal}\n')
-              """
         UrlPattern = "((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*" #don't fucking ask
         UrlRegEx = re.compile(UrlPattern)
         UrlMatch = UrlRegEx.match(message.content)
@@ -207,7 +220,7 @@ class customClient(discord.Client):
                 else:
                     os.remove(targetCacheFile)
                     os.rename(targetCacheFile2, targetCacheFile)
-            await message.add_reaction('✅')
+
         """    with open(targetCacheFile, mode="r+") as afterChecker: #remove new line at the end
                 afterChecker.seek(0, os.SEEK_END)                     # Move the pointer (similar to a cursor in a text editor) to the end of the file
                 pos = afterChecker.tell() - 1                         # This code means the following code skips the very last character in the file -
