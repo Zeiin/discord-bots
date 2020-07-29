@@ -4,6 +4,8 @@ import re
 import errno
 import os, os.path
 import discord
+from datetime import datetime
+from file_read_backwards import FileReadBackwards
 
 class Utilities:
 
@@ -69,19 +71,13 @@ class Utilities:
         targetCacheFile2 = f'{targetGuildName}/{type}Cache2.txt'
         targetCacheFile3 = f'{targetGuildName}/{type}Cache3.txt'
         print(f'we chose to cache {type} from {targetGuildName} into {targetCacheFile}\n')
-        print(f'1')
         try:                                            # EAFP principle in python, try to make the dir and if error aside from already exists occurs raise, otherwise ignore
             os.makedirs(targetGuildName + "/attachments")
-            print(f'2')
         except OSError as e:
             if e.errno != errno.EEXIST:                 # Only raise exception if the error is NOT that the directory already exists
-                print(f'4')
                 raise
-            else:
-                print(f'3')
 
         afterVal = None
-        print(f'1')
         try:
             with open(targetCacheFile,"r") as dateCheck:  # pull the most recent reminder (always the first reminder in file)
                 first_line = dateCheck.readline()
@@ -97,7 +93,7 @@ class Utilities:
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
-        print(f'2')
+        print(f'OPENING CACHE FILE\n')
         with open(targetCacheFile, encoding="utf8", mode="w") as outp:  # keep reminder caches seperated by folders named after each server - special characters probably not handled here..
             for curCHANNEL in curGUILD.channels:
                 if curCHANNEL.type is discord.ChannelType.text:  # only loop through text channels

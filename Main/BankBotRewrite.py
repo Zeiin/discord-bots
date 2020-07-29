@@ -141,7 +141,7 @@ async def imagineme(ctx):
 """
 @CLIENT.command()
 async def cachereminders(ctx):
-    UTILITIES.populateCache(ctx.message,"reminder")
+    await UTILITIES.populateCache(ctx.message,"reminder")
     await ctx.message.add_reaction('✅')
 
 @CLIENT.command()
