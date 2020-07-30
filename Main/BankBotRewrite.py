@@ -73,7 +73,7 @@ async def on_message(message):
 
     if message.content.lower().find("all my homies") != -1:
         await message.add_reaction('🔁')  # retweet in solidarity with ur homie
-    if(message.content.find("cumtown") == -1 ) or (message.content.find("append") == -1) or (message.guild.name == gServerName):
+    if((message.content.find("cumtown") == -1 ) and (message.content.find("append") == -1)) or (message.guild.name == gServerName):
         await CLIENT.process_commands(message) #process all the actual commands x)
 
 async def convertToEmojiAndReact(ctx, value):

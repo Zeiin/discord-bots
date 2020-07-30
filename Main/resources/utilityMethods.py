@@ -38,7 +38,7 @@ class Utilities:
                         val = val.replace("\'", "")
                         apndFile.write(f'\n{val}')
             elif ctx != "":
-                apndFile.write(f'\n{appendFormatted[2]}')
+                apndFile.write(f'\n{ctx}')
 
     def pullFromCache(self, message, type):
         targetGuildName = message.guild.name.replace(" ", "").replace("\'", "")
