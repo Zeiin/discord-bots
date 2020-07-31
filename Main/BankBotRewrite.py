@@ -38,6 +38,21 @@ async def on_ready():  # api flags on_ready when the bot connects and all overhe
 async def on_message(message):
     if message.author == CLIENT.user:
         return  # --No self-loops
+
+    UrlPattern = "((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*"  # don't fucking ask
+    UrlRegEx = re.compile(UrlPattern)
+    UrlMatch = UrlRegEx.match(message.content)
+
+    if len(message.attachments) > 0 or UrlMatch != None:
+        await message.add_reaction('🔁')  # retweet :)
+        await message.add_reaction('❤')  # like :)
+
+    if message.content.lower().find("all my homies") != -1:
+        await message.add_reaction('🔁')  # retweet in solidarity with ur homie
+
+    if((message.content.find(os.getenv("BOT_PREFIX")) == 0) and (message.content.lower().find("test")) > 0):
+
+        await testLastMembersinChat(message)
     if message.guild.name == gServerName:
         random.seed()
         randVal = random.randint(1, 1000)
@@ -64,18 +79,6 @@ async def on_message(message):
                 response = lines[random_line]  # pick a random line :) only reason I don't use my predefined method is to not strip text
             await message.channel.send(response)
 
-    UrlPattern = "((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*"  # don't fucking ask
-    UrlRegEx = re.compile(UrlPattern)
-    UrlMatch = UrlRegEx.match(message.content)
-
-    if len(message.attachments) > 0 or UrlMatch != None:
-        await message.add_reaction('🔁')  # retweet :)
-        await message.add_reaction('❤')  # like :)
-
-    if message.content.lower().find("all my homies") != -1:
-        await message.add_reaction('🔁')  # retweet in solidarity with ur homie
-    if((message.content.find(os.getenv("BOT_PREFIX")) == 0) and (message.content.find("test")) > 0):
-        await testLastMembersinChat(message)
     if((message.content.find("cumtown") == -1 ) and (message.content.find("append") == -1)) or (message.guild.name == gServerName):
         await CLIENT.process_commands(message) #process all the actual commands x)
 
@@ -100,13 +103,13 @@ async def getLastMembersinChat(message, timeLimit):
 
 async def testLastMembersinChat(message):
     AuthorList = await getLastMembersinChat(message, 5)
-    targetTest = re.search('!(.*)test', message.content).group(1).upper()                   #picking the "test" target i.e !TARGETtest would make our target "TARGET"
-    afterVal = await message.channel.send(f'{targetTest} TEST STARTING NOW, YOU HAVE {testTimer} SECONDS TO SEND A MESSAGE INCLUDING "NOT {targetTest}" (case insensitive) OR YOU\'LL BE DEEMED {targetTest}')
+    targetTest = re.search('!(.*)test', message.content.lower()).group(1).upper().rstrip().upper()                  #picking the "test" target i.e !TARGETtest would make our target "TARGET"
+    afterVal = await message.channel.send(f'{targetTest} TEST STARTING NOW, YOU HAVE {testTimer} SECONDS TO SEND A MESSAGE INCLUDING "NOT A {targetTest}" (case insensitive) OR YOU\'LL BE DEEMED {targetTest}')
     time.sleep(int(testTimer))
     await message.channel.send(f'GRADING {targetTest} TESTS.')
     async for curMESSAGE in message.channel.history(limit=None,after=afterVal):
         print(f'{curMESSAGE.content}\n')
-        if (curMESSAGE.content.lower().find(f'not {targetTest.lower()}') >= 0) and curMESSAGE.author in AuthorList:
+        if (curMESSAGE.content.lower().find(f'not a {targetTest.lower()}') >= 0) and curMESSAGE.author in AuthorList:
             if (curMESSAGE.content.lower().partition(targetTest.lower())[0].count("not") % 2 != 0):
                 AuthorList[:] = [Authors for Authors in AuthorList if curMESSAGE.author != Authors]
                 await curMESSAGE.add_reaction('✅')
@@ -115,12 +118,19 @@ async def testLastMembersinChat(message):
     FailureList = []
     for Authors in AuthorList:
         FailureList.append(Authors.mention)
-    if len(FailureList) == 1:
-        await message.channel.send(f'{", ".join(FailureList)} IS {targetTest}')
-    elif len(FailureList) > 1:
-        await message.channel.send(f'{", ".join(FailureList)} ARE {targetTest}')
+    Quantifier = "IS A"
+    if len(FailureList) > 1:
+        if (targetTest[len(targetTest) - 1].lower() == 'h') and (targetTest[len(targetTest) - 2].lower() == 'c'):
+            targetTest += 'E'
+        targetTest += 'S'
+        Quantifier = "ARE BOTH"
+        if len(FailureList) > 2:
+            Quantifier = "ARE ALL"
+
+    if len(FailureList) > 0:
+        await message.channel.send(f'{", ".join(FailureList)} {Quantifier} {targetTest}')
     else:
-        await message.channel.send(f'EVERYONE PASSED. NOBODY\'S {targetTest}')
+        await message.channel.send(f'EVERYONE PASSED. NOBODY IS A {targetTest}')
 
 @CLIENT.event
 async def on_command_error(ctx, error):
