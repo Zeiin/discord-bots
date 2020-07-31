@@ -101,7 +101,7 @@ async def getLastMembersinChat(message, timeLimit):
 async def testLastMembersinChat(message):
     AuthorList = await getLastMembersinChat(message, 5)
     targetTest = re.search('!(.*)test', message.content).group(1).upper()                   #picking the "test" target i.e !TARGETtest would make our target "TARGET"
-    afterVal = await message.channel.send(f'{targetTest} TEST STARTING NOW, YOU HAVE 90 SECONDS TO SEND A MESSAGE INCLUDING "NOT {targetTest}" (case insensitive) OR YOU\'LL BE DEEMED {targetTest}')
+    afterVal = await message.channel.send(f'{targetTest} TEST STARTING NOW, YOU HAVE {testTimer} SECONDS TO SEND A MESSAGE INCLUDING "NOT {targetTest}" (case insensitive) OR YOU\'LL BE DEEMED {targetTest}')
     time.sleep(int(testTimer))
     await message.channel.send(f'GRADING {targetTest} TESTS.')
     async for curMESSAGE in message.channel.history(limit=None,after=afterVal):
