@@ -6,7 +6,8 @@ import sys
 import random
 import re
 import errno
-from datetime import datetime
+import datetime
+import time
 from dotenv import load_dotenv
 from file_read_backwards import FileReadBackwards
 from resources.utilityMethods import Utilities
@@ -17,6 +18,7 @@ gServerName = os.getenv('DISCORD_GUILD')  # guild is an object referencing the s
 adjectiveFile = os.getenv('ADJ_BANK')
 nounFile = os.getenv("NOUN_BANK")
 wordBankFile = os.getenv('WORD_BANK')
+testTimer = os.getenv('TEST_TIMER')
 secretMorph = os.getenv("MORPH_DIR")
 secretMorphName = os.getenv("MORPH_NAME")
 secretMorphMsg = os.getenv("MORPH_MSG")
@@ -42,7 +44,7 @@ async def on_message(message):
         if randVal > 995:
             response = UTILITIES.generateTownMessage(adjectiveFile, nounFile)
             await message.channel.send(response)
-        if randVal == 2:
+        """if randVal == 2:
             await message.guild.me.edit(nick=secretMorphName)
             with open(secretMorph, 'rb') as f:
                 image = f.read()
@@ -51,15 +53,14 @@ async def on_message(message):
             MentionAuth = message.author.mention
             MorphResponse = f"{MentionAuth} Hello. {secretMorphMsg}"
             await message.channel.send(MorphResponse)
-
+        """
         pattern = "(.*)(99!+)(.*)"
         prog = re.compile(pattern)
         result = prog.match(message.content)
         if result != None:
             with open(wordBankFile, encoding="utf8") as inp:  # always pass encoding in when opening a file, or else emojis and special chars fail and shit your text up
                 lines = inp.readlines()
-                random_line = random.randint(0, len(
-                    lines) - 1)  # ensures our random line is within proper bounds, no OOB tricks here speedrunners
+                random_line = random.randint(0, len(lines) - 1)  # ensures our random line is within proper bounds, no OOB tricks here speedrunners
                 response = lines[random_line]  # pick a random line :) only reason I don't use my predefined method is to not strip text
             await message.channel.send(response)
 
@@ -73,6 +74,8 @@ async def on_message(message):
 
     if message.content.lower().find("all my homies") != -1:
         await message.add_reaction('🔁')  # retweet in solidarity with ur homie
+    if((message.content.find(os.getenv("BOT_PREFIX")) == 0) and (message.content.find("test")) > 0):
+        await testLastMembersinChat(message)
     if((message.content.find("cumtown") == -1 ) and (message.content.find("append") == -1)) or (message.guild.name == gServerName):
         await CLIENT.process_commands(message) #process all the actual commands x)
 
@@ -83,6 +86,41 @@ async def convertToEmojiAndReact(ctx, value):
     for digit in list(str(value)):
         await ctx.message.add_reaction(numEmojiDict[int(digit)])                #display your cooldown as a reaction :)
 
+async def getLastMembersinChat(message, timeLimit):
+    relevantAuthorList = []                                                             #declare empty list for obvious reasons
+    afterVal = datetime.datetime.now() - datetime.timedelta(minutes=timeLimit)          #note that these both have to be naive, if you make .now() aware you can't use timedelta, pretty fucking silly if you ask me haha :)
+    print(f'{afterVal}\n')
+    async for curMESSAGE in message.channel.history(limit=None,before=message,after=afterVal):                #after doesn't care about the time, these params handle the edge case of a dead server instead of a ridiculously long loop..
+        if(curMESSAGE.created_at >= afterVal):
+            if (not curMESSAGE.author in relevantAuthorList) and curMESSAGE.author != curMESSAGE.guild.me:      #don't include yourself (you being the bot) in this check, you'd fail every test
+                relevantAuthorList.append(curMESSAGE.author)
+        else:
+            break
+    return relevantAuthorList
+
+async def testLastMembersinChat(message):
+    AuthorList = await getLastMembersinChat(message, 5)
+    targetTest = re.search('!(.*)test', message.content).group(1).upper()                   #picking the "test" target i.e !TARGETtest would make our target "TARGET"
+    afterVal = await message.channel.send(f'{targetTest} TEST STARTING NOW, YOU HAVE 90 SECONDS TO SEND A MESSAGE INCLUDING "NOT {targetTest}" (case insensitive) OR YOU\'LL BE DEEMED {targetTest}')
+    time.sleep(int(testTimer))
+    await message.channel.send(f'GRADING {targetTest} TESTS.')
+    async for curMESSAGE in message.channel.history(limit=None,after=afterVal):
+        print(f'{curMESSAGE.content}\n')
+        if (curMESSAGE.content.lower().find(f'not {targetTest.lower()}') >= 0) and curMESSAGE.author in AuthorList:
+            if (curMESSAGE.content.lower().partition(targetTest.lower())[0].count("not") % 2 != 0):
+                AuthorList[:] = [Authors for Authors in AuthorList if curMESSAGE.author != Authors]
+                await curMESSAGE.add_reaction('✅')
+            else:
+                await curMESSAGE.add_reaction('❌')
+    FailureList = []
+    for Authors in AuthorList:
+        FailureList.append(Authors.mention)
+    if len(FailureList) == 1:
+        await message.channel.send(f'{", ".join(FailureList)} IS {targetTest}')
+    elif len(FailureList) > 1:
+        await message.channel.send(f'{", ".join(FailureList)} ARE {targetTest}')
+    else:
+        await message.channel.send(f'EVERYONE PASSED. NOBODY\'S {targetTest}')
 
 @CLIENT.event
 async def on_command_error(ctx, error):
