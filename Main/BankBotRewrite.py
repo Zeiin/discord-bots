@@ -223,7 +223,7 @@ async def widen(ctx, *args):
         imageURL = args[0]
         imageReq = requests.get(imageURL, stream=True)              #download image from the url using requests because it has a good user-header unlike urlrequest
         if imageReq.status_code == 200:
-            imgName = imageURL.split('/')[-1]
+            imgName = imageURL.split('/')[-1].partition('?')[0]
             filName = f"resources/Widen/{imgName}"
             with open(filName, 'wb') as f:
                 imageReq.raw.decode_content = True
