@@ -28,11 +28,22 @@ class Utilities:
         generatedtown = f'How about {adjectiveChoice} {nounChoice}'
         return generatedtown
 
-    def widenImage(self, imageFile, widenMultiple):
+    def widenImage(self, imageFile, widenMultiple, noCrop = 0):
         im = Image.open(imageFile)
         (width, height) = (im.width * 5 * widenMultiple, im.height // 1)  # Provide the target width and height of the image
         im = im.resize((width, height))
+        if noCrop == 0:
+            im = self.centerCrop(im, width/3, height)
         im.save(imageFile)
+
+    def centerCrop(self, img, desiredWidth, desiredHeight):
+        curWidth, curHeight = img.size
+        left, right = (curWidth - desiredWidth) / 2, (curWidth + desiredWidth) / 2
+        top, bottom = (curHeight - desiredHeight) / 2, (curHeight + desiredHeight) / 2
+        left, top = round(max(0, left)), round(max(0, top))
+        right, bottom = round(min(curWidth - 0, right)), round(min(curHeight - 0, bottom))
+        return img.crop((left, top, right, bottom))
+
     # Normally this would be a simple for loop based on the arguments, but since the more common use case is going to be a single input
     # inclusive of spaces, I've set it up such that to do multiple inputs you must single quote, and for one long input inclusive of spaces you just type freely.
     def appendToFileWeirdly(self, ctx, fileName):
