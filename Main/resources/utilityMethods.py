@@ -33,7 +33,7 @@ class Utilities:
         oldWidth, oldHeight = im.size
         (width, height) = (im.width * 3 * widenMultiple, im.height // 1)  # Provide the target width and height of the image
         im = im.resize((width, height))
-        if noCrop == 0 and width >= 2400:
+        if noCrop == 0 and width >= 2400 and height*2 < width:
             im = self.centerCrop(im, width/(3), height)
         im.save(imageFile)
 
