@@ -8,6 +8,7 @@ import re
 import errno
 import datetime
 import time
+from PIL import Image
 from dotenv import load_dotenv
 from file_read_backwards import FileReadBackwards
 from resources.utilityMethods import Utilities
@@ -33,6 +34,11 @@ async def on_ready():  # api flags on_ready when the bot connects and all overhe
         f'{CLIENT.user} is connected to the following guild:\n'  # Confirming where it's connected to. No reason to print its own identity though.
         f'{GUILD.name}(id: {GUILD.id})\n'
     )
+    try:  # EAFP principle in python, try to make the dir and if error aside from already exists occurs raise, otherwise ignore
+        os.makedirs("resources/Widen")
+    except OSError as e:
+        if e.errno != errno.EEXIST:  # Only raise exception if the error is NOT that the directory already exists
+            raise
 
 @CLIENT.event
 async def on_message(message):
@@ -141,8 +147,11 @@ async def on_command_error(ctx, error):
             if val.partition(".")[0].isdigit():
                 await convertToEmojiAndReact(ctx, int(val.partition(".")[0]))        #remove any decimal stuff and also any unit (i.e s for seconds)
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.message.channel.send("How about you actually give me an input")
+        await ctx.send("How about you actually give me an input")
         await ctx.message.add_reaction('❌')
+    else:
+        print(f'{str(error)}')
+        await ctx.send(error)
 
 @CLIENT.command()
 @commands.cooldown(1, 60, commands.BucketType.user)
@@ -196,5 +205,18 @@ async def cachereminders(ctx):
 async def cacheimagines(ctx):
     await UTILITIES.populateCache(ctx.message,"imagine")
     await ctx.message.add_reaction('✅')
+
+@CLIENT.command(aliases=['ultrawiden'])
+async def widen(ctx):
+    for attachment in ctx.message.attachments:  # check for files attached
+        filName = f'resources/Widen/{attachment.filename}'
+        await attachment.save(filName)  # save the file-like object, must be converted to discord file on use
+        im = Image.open(filName)
+        (width, height) = (im.width * 5 * (2 if ctx.message.content.find('ultra') > -1 else 1) , im.height // 1) # Provide the target width and height of the image
+        im = im.resize((width,height))
+        im.save(filName)
+        await ctx.send(content=f'{ctx.author.mention}', file=discord.File(filName))
+        os.remove(filName)
+
 
 CLIENT.run(TOKEN)  # turn bot on -- buy the bot dinner prior to this step
