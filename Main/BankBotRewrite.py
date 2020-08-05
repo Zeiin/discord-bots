@@ -8,6 +8,8 @@ import re
 import errno
 import datetime
 import time
+import requests
+import shutil
 from PIL import Image
 from dotenv import load_dotenv
 from file_read_backwards import FileReadBackwards
@@ -208,15 +210,41 @@ async def cacheimagines(ctx):
 
 @CLIENT.command(aliases=['ultrawiden'])
 async def widen(ctx):
-    for attachment in ctx.message.attachments:  # check for files attached
-        filName = f'resources/Widen/{attachment.filename}'
-        await attachment.save(filName)  # save the file-like object, must be converted to discord file on use
-        im = Image.open(filName)
-        (width, height) = (im.width * 5 * (2 if ctx.message.content.find('ultra') > -1 else 1) , im.height // 1) # Provide the target width and height of the image
-        im = im.resize((width,height))
-        im.save(filName)
+    filName = ""
+    imgName = ""
+    if(len(ctx.message.attachments) > 0):
+        for attachment in ctx.message.attachments:  # check for files attached
+            filName = f'resources/Widen/{attachment.filename}'
+            imgName = attachment.filename
+            await attachment.save(filName)  # save the file-like object, must be converted to discord file on use
+    if (len(ctx.message.embeds) > 0):
+        for embeds in ctx.message.embeds:
+            if not embeds.thumbnail.url == discord.Embed.Empty:
+                imageURL = embeds.thumbnail.url
+                imageReq = requests.get(imageURL, stream=True)              #download image from the url using requests because it has a good user-header unlike urlrequest
+                if imageReq.status_code == 200:
+                    imgName = imageURL.split('/')[-1]
+                    filName = f"resources/Widen/{imgName}"
+                    with open(filName, 'wb') as f:
+                        imageReq.raw.decode_content = True
+                        shutil.copyfileobj(imageReq.raw, f)
+    imageExtensions = ['.jpg', '.png', '.jpeg', '.bmp']
+    validImage = False
+    for ext in imageExtensions:
+        if filName.endswith(ext):
+            validImage = True
+    if validImage == True:
+        UTILITIES.widenImage(filName, 2 if ctx.message.content.find('ultra') > -1 else 1)
         await ctx.send(content=f'{ctx.author.mention}', file=discord.File(filName))
+    else:
+        await ctx.send(f'{ctx.author.mention} please send a valid image file.')
+    try:
         os.remove(filName)
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
+
+
 
 
 CLIENT.run(TOKEN)  # turn bot on -- buy the bot dinner prior to this step

@@ -4,6 +4,7 @@ import re
 import errno
 import os, os.path
 import discord
+from PIL import Image
 from datetime import datetime
 from file_read_backwards import FileReadBackwards
 
@@ -27,6 +28,11 @@ class Utilities:
         generatedtown = f'How about {adjectiveChoice} {nounChoice}'
         return generatedtown
 
+    def widenImage(self, imageFile, widenMultiple):
+        im = Image.open(imageFile)
+        (width, height) = (im.width * 5 * widenMultiple, im.height // 1)  # Provide the target width and height of the image
+        im = im.resize((width, height))
+        im.save(imageFile)
     # Normally this would be a simple for loop based on the arguments, but since the more common use case is going to be a single input
     # inclusive of spaces, I've set it up such that to do multiple inputs you must single quote, and for one long input inclusive of spaces you just type freely.
     def appendToFileWeirdly(self, ctx, fileName):
