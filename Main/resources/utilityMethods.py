@@ -30,10 +30,10 @@ class Utilities:
 
     def widenImage(self, imageFile, widenMultiple, noCrop = 0):
         im = Image.open(imageFile)
-        (width, height) = (im.width * 5 * widenMultiple, im.height // 1)  # Provide the target width and height of the image
+        (width, height) = (im.width * 3 * widenMultiple, im.height // 1)  # Provide the target width and height of the image
         im = im.resize((width, height))
-        if noCrop == 0:
-            im = self.centerCrop(im, width/3, height)
+        if noCrop == 0 and height > width:
+            im = self.centerCrop(im, width/(3), height)
         im.save(imageFile)
 
     def centerCrop(self, img, desiredWidth, desiredHeight):
