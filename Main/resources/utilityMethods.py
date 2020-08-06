@@ -11,6 +11,7 @@ from botocore.exceptions import ClientError
 from PIL import Image
 from datetime import datetime
 from file_read_backwards import FileReadBackwards
+PIL.Image.MAX_IMAGE_PIXELS = None
 
 
 class Utilities:
@@ -111,10 +112,10 @@ class Utilities:
             pass
 
     def processGifImage(self, path, widenMultiple, noCrop = 0):
-        retVal = imageio.mimread(path, memtest=False)
+        gifData = imageio.mimread(path, memtest=False)
         frameDelays = []
         frameData = []
-        for metaData in retVal:
+        for metaData in gifData:
             frameDelays.append(metaData.meta["duration"] * .001)
             frameData.append(metaData)
         imageio.mimsave(path, frameData, fps=30, duration=frameDelays)
