@@ -39,6 +39,7 @@ class Utilities:
         if noCrop == 0 and width >= 2400 and height*2 < width:
             im = self.centerCrop(im, width/(3), height)
         im.save(imageFile)
+        im.close()
 
     def centerCrop(self, img, desiredWidth, desiredHeight):
         curWidth, curHeight = img.size
@@ -124,6 +125,7 @@ class Utilities:
         self.widenImage(f'{path}', widenMultiple, noCrop) #we want to inherit the original gif's properties,
         im = Image.open(f'{path}')
         im.save(path, save_all=True, append_images=frameList[1:], loop=0)
+        im.close()
     # Normally this would be a simple for loop based on the arguments, but since the more common use case is going to be a single input
     # inclusive of spaces, I've set it up such that to do multiple inputs you must single quote, and for one long input inclusive of spaces you just type freely.
     def appendToFileWeirdly(self, ctx, fileName):

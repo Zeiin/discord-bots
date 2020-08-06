@@ -14,6 +14,7 @@ import pyimgur
 import pathlib
 import boto3
 import uuid
+import imageio
 from botocore.exceptions import NoCredentialsError
 from PIL import Image
 from dotenv import load_dotenv
@@ -297,12 +298,15 @@ async def speedup(ctx, *args):
                 shutil.copyfileobj(imageReq.raw, f)
     if filName.find('.gif') > 0:
         filName2 = f'resources/speedGif/{discrim}.gif'
-        im = Image.open(filName)
-        original_duration = im.info['duration']
-        frameList = []
-        for (i, frame) in enumerate(UTILITIES.getFrames(im)):
-            frameList.append(frame)
-        im.save(filName2, save_all=True, append_images=frameList, duration=original_duration * (0.5 if ctx.message.content.find('speed') > 0 else 2), loop=0)
+        retVal = imageio.mimread(filName, memtest=False)
+        frameDelays = []
+        frameData = []
+        print(f'starting loop\n')
+        for metaData in retVal:
+            frameDelays.append(metaData.meta["duration"] * (0.5 if ctx.message.content.find('speed') > 0 else 2) * 0.001)
+            frameData.append(metaData)
+            #print(f'{metaData.meta["duration"] * (0.5 if ctx.message.content.find("speed") > 0 else 2)}')
+        imageio.mimsave(filName2, frameData, fps=30, duration=frameDelays)
         cdnURL = UTILITIES.upload_file(filName2, BUCKET, AWS_CLIENT_ID, AWS_SECRET_KEY, CDN_DOMAIN)
         if (cdnURL != None):
             await ctx.send(content=f'{ctx.author.mention} {cdnURL}')
@@ -311,7 +315,6 @@ async def speedup(ctx, *args):
     else:
         await ctx.send("Please give me a gif.")
     try:
-        im.close()
         os.remove(filName)
         os.remove(filName2)
     except OSError as e:
@@ -321,3 +324,4 @@ async def speedup(ctx, *args):
 CLIENT.run(TOKEN)  # turn bot on -- buy the bot dinner prior to this step
 
 #UTILITIES.processGifImage('resources/sample.gif', 1, 0)
+
