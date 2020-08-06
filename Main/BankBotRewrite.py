@@ -13,6 +13,7 @@ import shutil
 import pyimgur
 import pathlib
 import boto3
+import uuid
 from botocore.exceptions import NoCredentialsError
 from PIL import Image
 from dotenv import load_dotenv
@@ -53,6 +54,11 @@ async def on_ready():  # api flags on_ready when the bot connects and all overhe
             raise
     try:  # EAFP principle in python, try to make the dir and if error aside from already exists occurs raise, otherwise ignore
         os.makedirs("resources/WidenGif")
+    except OSError as e:
+        if e.errno != errno.EEXIST:  # Only raise exception if the error is NOT that the directory already exists
+            raise
+    try:  # EAFP principle in python, try to make the dir and if error aside from already exists occurs raise, otherwise ignore
+        os.makedirs("resources/speedGif")
     except OSError as e:
         if e.errno != errno.EEXIST:  # Only raise exception if the error is NOT that the directory already exists
             raise
@@ -168,7 +174,7 @@ async def on_command_error(ctx, error):
         await ctx.message.add_reaction('❌')
     else:
         print(f'{str(error)}')
-        await ctx.send(error)
+        #await ctx.send(error)
 
 @CLIENT.command()
 @commands.cooldown(1, 60, commands.BucketType.user)
@@ -227,8 +233,7 @@ async def cacheimagines(ctx):
 async def widen(ctx, *args):
     filName = ""
     imgName = ""
-    random.seed()  # random seed so duplicate file names almost never happen
-    discrim = random.randint(1, 1000)
+    discrim = uuid.uuid1()
     if(len(args) == 0):
         if(len(ctx.message.attachments) > 0):
             for attachment in ctx.message.attachments:  # check for files attached
@@ -254,10 +259,10 @@ async def widen(ctx, *args):
         UTILITIES.widenImage(filName, 2 if ctx.message.content.find('ultra') > -1 else 1, 1 if ctx.message.content.find('nocrop') > -1 else 0)
         await ctx.send(content=f'{ctx.author.mention}', file=discord.File(filName))
     elif filName.endswith('.gif'):
+        filName2 = f'resources/Widen/{discrim}.gif'
         UTILITIES.processGifImage(filName, 2 if ctx.message.content.find('ultra') > -1 else 1, 1 if ctx.message.content.find('nocrop') > -1 else 0)
-       # imgurClient = pyimgur.Imgur(imgurClientID)
-        #gifUpload = imgurClient.upload_image(filName, title="W I D E N G I F")
-        cdnURL = UTILITIES.upload_file(filName, BUCKET, AWS_CLIENT_ID, AWS_SECRET_KEY, CDN_DOMAIN)
+        os.rename(filName, filName2)
+        cdnURL = UTILITIES.upload_file(filName2, BUCKET, AWS_CLIENT_ID, AWS_SECRET_KEY, CDN_DOMAIN)
         if(cdnURL != None):
             await ctx.send(content=f'{ctx.author.mention} {cdnURL}')
         else:
@@ -266,12 +271,52 @@ async def widen(ctx, *args):
         await ctx.send(f'{ctx.author.mention} please send a valid image file.')
     try:
         os.remove(filName)
+        os.remove(filName2)
+    except OSError as e:
+        if e.errno != errno.ENOENT and e.errno != errno.EPERM:
+            raise
+
+@CLIENT.command(aliases=['slowdown'])
+async def speedup(ctx, *args):
+    filName = ""
+    imgName = ""
+    discrim = uuid.uuid1()
+    if (len(args) == 0):
+        if (len(ctx.message.attachments) > 0):
+            for attachment in ctx.message.attachments:  # check for files attached
+                filName = f'resources/speedGif/{discrim}{attachment.filename}'
+                await attachment.save(filName)  # save the file-like object, must be converted to discord file on use
+    else:
+        imageURL = args[0]
+        imageReq = requests.get(imageURL,stream=True)  # download image from the url using requests because it has a good user-header unlike urlrequest
+        if imageReq.status_code == 200:
+            imgName = imageURL.split('/')[-1].partition('?')[0]
+            filName = f"resources/speedGif/{discrim}{imgName}"
+            with open(filName, 'wb') as f:
+                imageReq.raw.decode_content = True
+                shutil.copyfileobj(imageReq.raw, f)
+    if filName.find('.gif') > 0:
+        filName2 = f'resources/speedGif/{discrim}.gif'
+        im = Image.open(filName)
+        original_duration = im.info['duration']
+        frameList = []
+        for (i, frame) in enumerate(UTILITIES.getFrames(im)):
+            frameList.append(frame)
+        im.save(filName2, save_all=True, append_images=frameList, duration=original_duration * (0.5 if ctx.message.content.find('speed') > 0 else 2), loop=0)
+        cdnURL = UTILITIES.upload_file(filName2, BUCKET, AWS_CLIENT_ID, AWS_SECRET_KEY, CDN_DOMAIN)
+        if (cdnURL != None):
+            await ctx.send(content=f'{ctx.author.mention} {cdnURL}')
+        else:
+            await ctx.send("some shit went wrong when uploaded gif to web server.. tell zein to check it later")
+    else:
+        await ctx.send("Please give me a gif.")
+    try:
+        im.close()
+        os.remove(filName)
+        os.remove(filName2)
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise
-
-
-
 
 CLIENT.run(TOKEN)  # turn bot on -- buy the bot dinner prior to this step
 
