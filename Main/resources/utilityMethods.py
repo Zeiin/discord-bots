@@ -120,6 +120,7 @@ class Utilities:
             frameDelays.append(metaData.meta["duration"] * .001)
             frameData.append(metaData)
         imageio.mimsave(path, frameData, fps=30, duration=frameDelays)
+
         im = Image.open(path)
         print(f'GIF OPENED BY PILLOW\n')
         frameList = []
@@ -134,7 +135,10 @@ class Utilities:
             frameList.append(frame)
             #frame.save('/resources/WidenGif/%s-%d.png' % (''.join(os.path.basename(path).split('.')[:-1]), i), 'PNG')
         #print(f'processed the frames? i guess?')
-        frameList[0].save(path, save_all=True, append_images=frameList[1:], loop=0)
+        im.save(f'{path}')
+        self.widenImage(f'{path}', widenMultiple, noCrop)  # we want to inherit the original gif's properties i.e frame delays, fps, so we open the first and attach our frames to the first frame of the original
+        im = Image.open(f'{path}')
+        im.save(path, save_all=True, append_images=frameList[1:], loop=0)
         im.close()
     # Normally this would be a simple for loop based on the arguments, but since the more common use case is going to be a single input
     # inclusive of spaces, I've set it up such that to do multiple inputs you must single quote, and for one long input inclusive of spaces you just type freely.

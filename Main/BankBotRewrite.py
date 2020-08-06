@@ -312,7 +312,7 @@ async def speedup(ctx, *args):
             frameDelays.append(curDelay if curDelay > 0.02 else 0.02)
             frameData.append(metaData)
             #print(f'{metaData.meta["duration"] * (0.5 if ctx.message.content.find("speed") > 0 else 2)}')
-        imageio.mimsave(filName2, frameData, fps=60, duration=frameDelays)
+        imageio.mimsave(filName2, frameData, duration=frameDelays)
         cdnURL = UTILITIES.upload_file(filName2, BUCKET, AWS_CLIENT_ID, AWS_SECRET_KEY, CDN_DOMAIN)
         if (cdnURL != None):
             await ctx.send(content=f'{ctx.author.mention} {cdnURL}')
