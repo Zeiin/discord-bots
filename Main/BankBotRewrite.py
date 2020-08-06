@@ -10,6 +10,12 @@ import datetime
 import time
 import requests
 import shutil
+import pyimgur
+import pathlib
+import boto3
+from botocore.exceptions import NoCredentialsError
+from pygifsicle import optimize
+from pystreamable import StreamableApi
 from PIL import Image
 from dotenv import load_dotenv
 from file_read_backwards import FileReadBackwards
@@ -18,6 +24,12 @@ from resources.utilityMethods import Utilities
 load_dotenv()  # loads .env file in the same directory -- use for configs and any changes -- dont edit settings in this file, use the env file
 TOKEN = os.getenv('DISCORD_TOKEN')  # loads PRIVATE discord token that we set as an env variable in the .env file -- this is done so you don't post private token to VCs software i.e github
 gServerName = os.getenv('DISCORD_GUILD')  # guild is an object referencing the server the bot/users are in, just returning the 'main' server for our worst commands
+IMGUR_API_ID = os.getenv('IMGUR_API_ID')
+IMGUR_API_SECRET = os.getenv('IMGUR_API_SECRET')
+AWS_CLIENT_ID = os.getenv('AWS_ID')
+AWS_SECRET_KEY = os.getenv('AWS_SECRET')
+CDN_DOMAIN = os.getenv('CDN_DOMAIN')
+BUCKET = os.getenv('BUCKET')
 adjectiveFile = os.getenv('ADJ_BANK')
 nounFile = os.getenv("NOUN_BANK")
 wordBankFile = os.getenv('WORD_BANK')
@@ -38,6 +50,11 @@ async def on_ready():  # api flags on_ready when the bot connects and all overhe
     )
     try:  # EAFP principle in python, try to make the dir and if error aside from already exists occurs raise, otherwise ignore
         os.makedirs("resources/Widen")
+    except OSError as e:
+        if e.errno != errno.EEXIST:  # Only raise exception if the error is NOT that the directory already exists
+            raise
+    try:  # EAFP principle in python, try to make the dir and if error aside from already exists occurs raise, otherwise ignore
+        os.makedirs("resources/WidenGif")
     except OSError as e:
         if e.errno != errno.EEXIST:  # Only raise exception if the error is NOT that the directory already exists
             raise
@@ -212,11 +229,13 @@ async def cacheimagines(ctx):
 async def widen(ctx, *args):
     filName = ""
     imgName = ""
+    random.seed()  # random seed so duplicate file names almost never happen
+    discrim = random.randint(1, 1000)
     if(len(args) == 0):
         if(len(ctx.message.attachments) > 0):
             for attachment in ctx.message.attachments:  # check for files attached
-                filName = f'resources/Widen/{attachment.filename}'
-                imgName = attachment.filename
+                filName = f'resources/Widen/{discrim}{attachment.filename}'
+                imgName = f'{discrim}{attachment.filename}'
                 await attachment.save(filName)  # save the file-like object, must be converted to discord file on use
     else:
         #imageURL = embeds.thumbnail.url
@@ -224,11 +243,11 @@ async def widen(ctx, *args):
         imageReq = requests.get(imageURL, stream=True)              #download image from the url using requests because it has a good user-header unlike urlrequest
         if imageReq.status_code == 200:
             imgName = imageURL.split('/')[-1].partition('?')[0]
-            filName = f"resources/Widen/{imgName}"
+            filName = f"resources/Widen/{discrim}{imgName}"
             with open(filName, 'wb') as f:
                 imageReq.raw.decode_content = True
                 shutil.copyfileobj(imageReq.raw, f)
-    imageExtensions = ['.jpg', '.png', '.jpeg', '.bmp', '.gif']
+    imageExtensions = ['.jpg', '.png', '.jpeg', '.bmp']
     validImage = False
     for ext in imageExtensions:
         if filName.endswith(ext):
@@ -236,6 +255,15 @@ async def widen(ctx, *args):
     if validImage == True:
         UTILITIES.widenImage(filName, 2 if ctx.message.content.find('ultra') > -1 else 1, 1 if ctx.message.content.find('nocrop') > -1 else 0)
         await ctx.send(content=f'{ctx.author.mention}', file=discord.File(filName))
+    elif filName.endswith('.gif'):
+        UTILITIES.processGifImage(filName, 2 if ctx.message.content.find('ultra') > -1 else 1, 1 if ctx.message.content.find('nocrop') > -1 else 0)
+       # imgurClient = pyimgur.Imgur(imgurClientID)
+        #gifUpload = imgurClient.upload_image(filName, title="W I D E N G I F")
+        cdnURL = UTILITIES.upload_file(filName, BUCKET, AWS_CLIENT_ID, AWS_SECRET_KEY, CDN_DOMAIN)
+        if(cdnURL != None):
+            await ctx.send(content=f'{ctx.author.mention} {cdnURL}')
+        else:
+            await ctx.send("some shit went wrong when uploaded gif to web server.. tell zein to check it later")
     else:
         await ctx.send(f'{ctx.author.mention} please send a valid image file.')
     try:
@@ -248,3 +276,5 @@ async def widen(ctx, *args):
 
 
 CLIENT.run(TOKEN)  # turn bot on -- buy the bot dinner prior to this step
+
+#UTILITIES.processGifImage('resources/sample.gif', 1, 0)

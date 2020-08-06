@@ -4,12 +4,15 @@ import re
 import errno
 import os, os.path
 import discord
+import logging
+import boto3
+from botocore.exceptions import ClientError
 from PIL import Image
 from datetime import datetime
 from file_read_backwards import FileReadBackwards
 
-class Utilities:
 
+class Utilities:
     def pullRandomLine(self, fileNamei):
         with open(fileNamei, encoding="utf8", mode="r") as inp:
             random.seed()
@@ -45,6 +48,82 @@ class Utilities:
         right, bottom = round(min(curWidth - 0, right)), round(min(curHeight - 0, bottom))
         return img.crop((left, top, right, bottom))
 
+    def analyseImage(self, im):
+        '''
+        Pre-process pass over the image to determine the mode (full or additive).
+        Necessary as assessing single frames isn't reliable. Need to know the mode
+        before processing all frames.
+        '''
+        results = {
+            'size': im.size,
+            'mode': 'full',
+        }
+        try:
+            while True:
+                if im.tile:
+                    tile = im.tile[0]
+                    update_region = tile[1]
+                    update_region_dimensions = update_region[2:]
+                    if update_region_dimensions != im.size:
+                        results['mode'] = 'partial'
+                        break
+                im.seek(im.tell() + 1)
+        except EOFError:
+            pass
+        im.seek(0)
+        return results
+
+    def getFrames(self, im):
+        '''
+        Iterate the GIF, extracting each frame.
+        '''
+        mode = self.analyseImage(im)['mode']
+
+        p = im.getpalette()
+        last_frame = im.convert('RGBA')
+
+        try:
+            while True:
+                '''
+                If the GIF uses local colour tables, each frame will have its own palette.
+                If not, we need to apply the global palette to the new frame.
+                '''
+                if not im.getpalette():
+                    im.putpalette(p)
+
+                new_frame = Image.new('RGBA', im.size)
+
+                '''
+                Is this file a "partial"-mode GIF where frames update a region of a different size to the entire image?
+                If so, we need to construct the new frame by pasting it on top of the preceding frames.
+                '''
+                if mode == 'partial':
+                    new_frame.paste(last_frame)
+
+                new_frame.paste(im, (0, 0), im.convert('RGBA'))
+                yield new_frame
+
+                last_frame = new_frame
+                im.seek(im.tell() + 1)
+        except EOFError:
+            pass
+
+    def processGifImage(self, path, widenMultiple, noCrop = 0):
+        im = Image.open(path)
+        frameList = []
+        for (i, frame) in enumerate(self.getFrames(im)):
+            #print("saving %s frame %d, %s %s" % (path, i, im.size, im.tile))
+            oldWidth, oldHeight = frame.size
+            (width, height) = (frame.width * 3 * widenMultiple, frame.height // 1)  # Provide the target width and height of the image
+            frame = frame.resize((width, height))
+            if noCrop == 0 and width >= 2400 and height * 2 < width:
+                frame = self.centerCrop(frame, width / (3), height)
+            frameList.append(frame)
+            #frame.save('/resources/WidenGif/%s-%d.png' % (''.join(os.path.basename(path).split('.')[:-1]), i), 'PNG')
+        im.save(f'{path}')
+        self.widenImage(f'{path}', widenMultiple, noCrop) #we want to inherit the original gif's properties,
+        im = Image.open(f'{path}')
+        im.save(path, save_all=True, append_images=frameList[1:], loop=0)
     # Normally this would be a simple for loop based on the arguments, but since the more common use case is going to be a single input
     # inclusive of spaces, I've set it up such that to do multiple inputs you must single quote, and for one long input inclusive of spaces you just type freely.
     def appendToFileWeirdly(self, ctx, fileName):
@@ -147,3 +226,16 @@ class Utilities:
             else:
                 os.remove(targetCacheFile)
                 os.rename(targetCacheFile2, targetCacheFile)
+
+    def upload_file(self, fileName, bucket, AWS_CLIENT, AWS_SECRET, CDN_DOMAIN, object_name=None):
+        # If S3 object_name was not specified, use file_name
+        if object_name is None:
+            object_name = fileName.split('/')[-1]
+        # Upload the file
+        s3_client = client = boto3.client('s3', aws_access_key_id=AWS_CLIENT, aws_secret_access_key=AWS_SECRET)
+        try:
+            response = s3_client.upload_file(fileName, bucket, object_name, ExtraArgs={'ContentType': 'image/gif'})     #only doing this for gifs..
+        except ClientError as e:
+            logging.error(e)
+            return None
+        return f"{CDN_DOMAIN}{fileName.split('/')[-1]}"
