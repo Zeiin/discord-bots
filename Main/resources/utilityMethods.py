@@ -124,6 +124,7 @@ class Utilities:
         print(f'GIF OPENED BY PILLOW\n')
         frameList = []
         for (i, frame) in enumerate(self.getFrames(im)):
+            print(f'processing frames in loop')
             #print("saving %s frame %d, %s %s" % (path, i, im.size, im.tile))
             oldWidth, oldHeight = frame.size
             (width, height) = (frame.width * 3 * widenMultiple, frame.height // 1)  # Provide the target width and height of the image
@@ -132,6 +133,7 @@ class Utilities:
                 frame = self.centerCrop(frame, width / (3), height)
             frameList.append(frame)
             #frame.save('/resources/WidenGif/%s-%d.png' % (''.join(os.path.basename(path).split('.')[:-1]), i), 'PNG')
+        print(f'processed the frames? i guess?')
         frameList[0].save(path, save_all=True, append_images=frameList[1:], loop=0)
         im.close()
     # Normally this would be a simple for loop based on the arguments, but since the more common use case is going to be a single input
