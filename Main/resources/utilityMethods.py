@@ -7,6 +7,7 @@ import discord
 import logging
 import boto3
 import imageio
+import PIL
 from botocore.exceptions import ClientError
 from PIL import Image
 from datetime import datetime
