@@ -14,8 +14,6 @@ import pyimgur
 import pathlib
 import boto3
 from botocore.exceptions import NoCredentialsError
-from pygifsicle import optimize
-from pystreamable import StreamableApi
 from PIL import Image
 from dotenv import load_dotenv
 from file_read_backwards import FileReadBackwards
