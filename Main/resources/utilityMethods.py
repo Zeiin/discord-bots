@@ -6,6 +6,7 @@ import os, os.path
 import discord
 import logging
 import boto3
+import imageio
 from botocore.exceptions import ClientError
 from PIL import Image
 from datetime import datetime
@@ -110,6 +111,13 @@ class Utilities:
             pass
 
     def processGifImage(self, path, widenMultiple, noCrop = 0):
+        retVal = imageio.mimread(path, memtest=False)
+        frameDelays = []
+        frameData = []
+        for metaData in retVal:
+            frameDelays.append(metaData.meta["duration"] * .001)
+            frameData.append(metaData)
+        imageio.mimsave(path, frameData, fps=30, duration=frameDelays)
         im = Image.open(path)
         frameList = []
         for (i, frame) in enumerate(self.getFrames(im)):

@@ -15,11 +15,13 @@ import pathlib
 import boto3
 import uuid
 import imageio
+import PIL
 from botocore.exceptions import NoCredentialsError
 from PIL import Image
 from dotenv import load_dotenv
 from file_read_backwards import FileReadBackwards
 from resources.utilityMethods import Utilities
+PIL.Image.MAX_IMAGE_PIXELS = None
 
 load_dotenv()  # loads .env file in the same directory -- use for configs and any changes -- dont edit settings in this file, use the env file
 TOKEN = os.getenv('DISCORD_TOKEN')  # loads PRIVATE discord token that we set as an env variable in the .env file -- this is done so you don't post private token to VCs software i.e github
@@ -268,11 +270,15 @@ async def widen(ctx, *args):
             await ctx.send(content=f'{ctx.author.mention} {cdnURL}')
         else:
             await ctx.send("some shit went wrong when uploaded gif to web server.. tell zein to check it later")
+        try:
+            os.remove(filName2)
+        except OSError as e:
+            if e.errno != errno.ENOENT and e.errno != errno.EPERM:
+                raise
     else:
         await ctx.send(f'{ctx.author.mention} please send a valid image file.')
     try:
         os.remove(filName)
-        os.remove(filName2)
     except OSError as e:
         if e.errno != errno.ENOENT and e.errno != errno.EPERM:
             raise
