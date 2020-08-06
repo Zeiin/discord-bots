@@ -283,7 +283,7 @@ async def widen(ctx, *args):
         if e.errno != errno.ENOENT and e.errno != errno.EPERM:
             raise
 
-@CLIENT.command(aliases=['slowdown'])
+@CLIENT.command(aliases=['slowdown', 'emspeeden'])
 async def speedup(ctx, *args):
     filName = ""
     imgName = ""
