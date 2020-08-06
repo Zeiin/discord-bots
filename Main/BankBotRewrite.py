@@ -307,12 +307,12 @@ async def speedup(ctx, *args):
         retVal = imageio.mimread(filName, memtest=False)
         frameDelays = []
         frameData = []
-        print(f'starting loop\n')
         for metaData in retVal:
-            frameDelays.append(metaData.meta["duration"] * (0.5 if ctx.message.content.find('speed') > 0 else 2) * 0.001)
+            curDelay = metaData.meta["duration"] * (0.5 if ctx.message.content.find('speed') > 0 else 2) * 0.001
+            frameDelays.append(curDelay if curDelay > 0.02 else 0.02)
             frameData.append(metaData)
             #print(f'{metaData.meta["duration"] * (0.5 if ctx.message.content.find("speed") > 0 else 2)}')
-        imageio.mimsave(filName2, frameData, fps=30, duration=frameDelays)
+        imageio.mimsave(filName2, frameData, fps=60, duration=frameDelays)
         cdnURL = UTILITIES.upload_file(filName2, BUCKET, AWS_CLIENT_ID, AWS_SECRET_KEY, CDN_DOMAIN)
         if (cdnURL != None):
             await ctx.send(content=f'{ctx.author.mention} {cdnURL}')
