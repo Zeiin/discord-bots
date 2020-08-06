@@ -123,7 +123,11 @@ class Utilities:
         im = Image.open(path)
         print(f'GIF OPENED BY PILLOW\n')
         frameList = []
+        frameArr = []
         for (i, frame) in enumerate(self.getFrames(im)):
+            frameArr.append(frame)
+        im.close()
+        for frame in frameArr:
             print(f'processing frames in loop')
             #print("saving %s frame %d, %s %s" % (path, i, im.size, im.tile))
             oldWidth, oldHeight = frame.size
