@@ -21,15 +21,8 @@ class customClient(discord.Client):
         if message.author == CLIENT.user:
             return #--No self-loops
 
-        DmgPattern = "(?i)(.*)(crayon eater+)(.*)"
-        DmgRegEx = re.compile(DmgPattern)
-        DmgMatch = DmgRegEx.match(message.content)
-
-        UrlPattern = "((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*"
-        UrlRegEx = re.compile(UrlPattern)
-        UrlMatch = UrlRegEx.match(message.content)
-
-        if DmgMatch != None and message.guild == "Savathun's Thong Song":
+        print(f'{message.content}')
+        if message.content.lower().find('crayon eater') > -1:
             await message.guild.me.edit(nick="Dmg04")
             with open(AvatarFILE, 'rb') as f:
                 image = f.read()
@@ -39,7 +32,7 @@ class customClient(discord.Client):
             DmgResponse = f"{MentionAuth} Crayon Eater is a Slur\n{MentionAuth} Crayon Eater is a SLUR\n{MentionAuth} CRAYON EATER IS A SLUR\n"
             await message.channel.send(DmgResponse)
 
-        if message.content == "!resetD" and message.guild == "Savathun's Thong Song":
+        if message.content.lower().find('!resetd') > -1:
             await message.guild.me.edit(nick="Mystery")
             with open(OriginalAvaterFILE, 'rb') as f:
                 image = f.read()

@@ -304,7 +304,7 @@ async def speedup(ctx, *args):
                 shutil.copyfileobj(imageReq.raw, f)
     if filName.find('.gif') > 0:
         filName2 = f'resources/speedGif/{discrim}.gif'
-        retVal = imageio.mimread(filName, memtest=False)
+        retVal = imageio.mimread(filName, format="GIF-PIL", memtest=False)
         frameDelays = []
         frameData = []
         for metaData in retVal:
@@ -312,7 +312,7 @@ async def speedup(ctx, *args):
             frameDelays.append(curDelay if curDelay > 0.02 else 0.02)
             frameData.append(metaData)
             #print(f'{metaData.meta["duration"] * (0.5 if ctx.message.content.find("speed") > 0 else 2)}')
-        imageio.mimsave(filName2, frameData, duration=frameDelays)
+        imageio.mimsave(filName2, frameData, format="GIF-PIL" ,duration=frameDelays)
         cdnURL = UTILITIES.upload_file(filName2, BUCKET, AWS_CLIENT_ID, AWS_SECRET_KEY, CDN_DOMAIN)
         if (cdnURL != None):
             await ctx.send(content=f'{ctx.author.mention} {cdnURL}')
