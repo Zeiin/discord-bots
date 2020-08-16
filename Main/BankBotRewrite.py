@@ -253,7 +253,7 @@ async def widen(ctx, *args):
             with open(filName, 'wb') as f:
                 imageReq.raw.decode_content = True
                 shutil.copyfileobj(imageReq.raw, f)
-    imageExtensions = ['.jpg', '.png', '.jpeg', '.bmp']
+    imageExtensions = ['.jpg', '.png', '.jpeg', '.bmp', '.webp']
     validImage = False
     for ext in imageExtensions:
         if filName.endswith(ext):
@@ -277,6 +277,45 @@ async def widen(ctx, *args):
                 raise
     else:
         await ctx.send(f'{ctx.author.mention} please send a valid image file.')
+    try:
+        os.remove(filName)
+    except OSError as e:
+        if e.errno != errno.ENOENT and e.errno != errno.EPERM:
+            raise
+
+@CLIENT.command(aliases=['ultrawidenavatar', ''])
+async def widenavatar(ctx, user: discord.Member):
+    filName = ""
+    imgName = ""
+    discrim = uuid.uuid1()
+    userAvatar = user.avatar_url
+    imageReq = requests.get(userAvatar, stream=True)  # download image from the url using requests because it has a good user-header unlike urlrequest
+    if imageReq.status_code == 200:
+        imgName = str(userAvatar).split('/')[-1].partition('?')[0]
+        filName = f"resources/Widen/{discrim}{imgName}"
+        with open(filName, 'wb') as f:
+            imageReq.raw.decode_content = True
+            shutil.copyfileobj(imageReq.raw, f)
+
+    if filName.endswith("gif"):
+        filName2 = f'resources/Widen/{discrim}.gif'
+        UTILITIES.processGifImage(filName, 2 if ctx.message.content.find('ultra') > -1 else 1, 1 if ctx.message.content.find('nocrop') > -1 else 0)
+        os.rename(filName, filName2)
+        cdnURL = UTILITIES.upload_file(filName2, BUCKET, AWS_CLIENT_ID, AWS_SECRET_KEY, CDN_DOMAIN)
+        if (cdnURL != None):
+            await ctx.send(content=f'{ctx.author.mention} {cdnURL}')
+        else:
+            await ctx.send("some shit went wrong when uploaded gif to web server.. tell zein to check it later")
+        try:
+            os.remove(filName2)
+        except OSError as e:
+            if e.errno != errno.ENOENT and e.errno != errno.EPERM:
+                raise
+    elif filName.endswith("jpg") or filName.endswith("webp") :
+        UTILITIES.widenImage(filName, 2 if ctx.message.content.find('ultra') > -1 else 1, 1 if ctx.message.content.find('nocrop') > -1 else 0)
+        await ctx.send(content=f'{ctx.author.mention}', file=discord.File(filName))
+    else:
+        await ctx.send(f'{ctx.author.mention} Sorry, I couldn\'t grab the requested user\'s avatar')
     try:
         os.remove(filName)
     except OSError as e:
@@ -326,6 +365,11 @@ async def speedup(ctx, *args):
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise
+
+@CLIENT.command()
+async def getavatar(ctx, user: discord.Member):
+    userAvatar = user.avatar_url
+    await ctx.send(userAvatar)
 
 CLIENT.run(TOKEN)  # turn bot on -- buy the bot dinner prior to this step
 
