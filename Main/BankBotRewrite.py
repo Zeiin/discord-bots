@@ -283,7 +283,7 @@ async def widen(ctx, *args):
         if e.errno != errno.ENOENT and e.errno != errno.EPERM:
             raise
 
-@CLIENT.command(aliases=['ultrawidenavatar', ''])
+@CLIENT.command(aliases=['ultrawidenavatar', 'ultrawideavatar', 'wideavatar'])
 async def widenavatar(ctx, user: discord.Member):
     filName = ""
     imgName = ""
@@ -366,7 +366,7 @@ async def speedup(ctx, *args):
         if e.errno != errno.ENOENT:
             raise
 
-@CLIENT.command()
+@CLIENT.command(aliases=['avatar'])
 async def getavatar(ctx, user: discord.Member):
     userAvatar = user.avatar_url
     await ctx.send(userAvatar)
