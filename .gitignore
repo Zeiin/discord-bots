@@ -3,7 +3,7 @@ Include/
 Lib/
 Scripts/
 */attachments
-
+share/
 *.jpg
 *.env
 *.exe
@@ -18,3 +18,5 @@ Scripts/
 *.mp3
 *.jpeg
 *.webp
+.gitignore
+
