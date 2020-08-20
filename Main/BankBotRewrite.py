@@ -393,11 +393,11 @@ async def bakamitai(ctx, *args):
         im = im.resize((256, 256))
         im.save(filName)
         im.close()
-        batchFileLocation = 'MLDeepFake\\first-order-model'
+        batchFileLocation = 'MLDeepFake/first-order-model'
         batchFileFullPath = os.path.join(batchFileLocation, 'Bakamitai.bat')
         p = subprocess.Popen(os.path.abspath(batchFileFullPath), cwd = batchFileLocation)
         p.wait()
-        discordFil = discord.File(f"MLDeepFake\\first-order-model\\finalResult.mp4")
+        discordFil = discord.File(f"MLDeepFake/first-order-model/finalResult.mp4")
         await ctx.send(file = discordFil)
     else:
         await ctx.send("Couldn't get that image idk why")
