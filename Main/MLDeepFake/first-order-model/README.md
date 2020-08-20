@@ -1,2 +1,2 @@
 
-All credit goes here: https://github.com/AliaksandrSiarohin/first-order-model
+All credit goes here: https://github.com/AliaksandrSiarohin/first-order-model for this 
