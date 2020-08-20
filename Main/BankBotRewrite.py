@@ -371,7 +371,7 @@ async def speedup(ctx, *args):
 async def getavatar(ctx, user: discord.Member):
     userAvatar = user.avatar_url
     await ctx.send(userAvatar)
-
+"""
 @CLIENT.command()
 async def bakamitai(ctx, *args):
     filName = ""
@@ -406,8 +406,6 @@ async def bakamitai(ctx, *args):
     except OSError as e:
         if e.errno != errno.ENOENT and e.errno != errno.EPERM:
             raise
-
+"""
 CLIENT.run(TOKEN)  # turn bot on -- buy the bot dinner prior to this step
-
-#UTILITIES.processGifImage('resources/sample.gif', 1, 0)
 
