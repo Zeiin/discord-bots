@@ -1,0 +1,2 @@
+python demo.py  --config config/taichi-adv-256.yaml --driving_video resources/WideBase.mp4 --source_image resources/BaseWideIMG.png --checkpoint resources/taichi-adv-cpk.pth.tar --relative --adapt_scale
+python addWideAudio.py

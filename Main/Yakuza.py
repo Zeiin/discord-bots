@@ -57,6 +57,7 @@ async def bakamitai(ctx, *args):
                 imageReq.raw.decode_content = True
                 shutil.copyfileobj(imageReq.raw, f)
     if os.path.exists(filName) == True:
+        ctx.message.add_reaction('✅')
         im = Image.open(filName)
         im = im.resize((256, 256))
         im.save(filName)
