@@ -16,6 +16,7 @@ import boto3
 import uuid
 import imageio
 import PIL
+import subprocess
 from botocore.exceptions import NoCredentialsError
 from PIL import Image
 from dotenv import load_dotenv
@@ -370,6 +371,41 @@ async def speedup(ctx, *args):
 async def getavatar(ctx, user: discord.Member):
     userAvatar = user.avatar_url
     await ctx.send(userAvatar)
+
+@CLIENT.command()
+async def bakamitai(ctx, *args):
+    filName = ""
+    if (len(args) == 0):
+        if (len(ctx.message.attachments) > 0):
+            for attachment in ctx.message.attachments:  # check for files attached
+                filName = f'MLDeepFake/first-order-model/resources/BaseIMG.png'
+                await attachment.save(filName)  # save the file-like object, must be converted to discord file on use
+    else:
+        imageURL = args[0]
+        imageReq = requests.get(imageURL,stream=True)  # download image from the url using requests because it has a good user-header unlike urlrequest
+        if imageReq.status_code == 200:
+            filName = f'MLDeepFake/first-order-model/resources/BaseIMG.png'
+            with open(filName, 'wb') as f:
+                imageReq.raw.decode_content = True
+                shutil.copyfileobj(imageReq.raw, f)
+    if os.path.exists(filName) == True:
+        im = Image.open(filName)
+        im = im.resize((256, 256))
+        im.save(filName)
+        im.close()
+        batchFileLocation = 'MLDeepFake\\first-order-model'
+        batchFileFullPath = os.path.join(batchFileLocation, 'Bakamitai.bat')
+        p = subprocess.Popen(os.path.abspath(batchFileFullPath), cwd = batchFileLocation)
+        p.wait()
+        discordFil = discord.File(f"MLDeepFake\\first-order-model\\finalResult.mp4")
+        await ctx.send(file = discordFil)
+    else:
+        await ctx.send("Couldn't get that image idk why")
+    try:
+        os.remove(filName)
+    except OSError as e:
+        if e.errno != errno.ENOENT and e.errno != errno.EPERM:
+            raise
 
 CLIENT.run(TOKEN)  # turn bot on -- buy the bot dinner prior to this step
 
