@@ -40,8 +40,10 @@ async def on_command_error(ctx, error):
     else:
         print(f'{str(error)}')
 
-@CLIENT.command()
+@CLIENT.command(aliases=['BTR', 'meatbeat', 'gnome', 'warface', 'iq', 'numa', 'naughty', 'rawr', '87'])
 async def bakamitai(ctx, *args):
+    #alias = ctx.message.content.partition(' ')[0].partition('!')[2]
+    alias = ctx.invoked_with
     filName = ""
     if (len(args) == 0):
         if (len(ctx.message.attachments) > 0):
@@ -57,15 +59,15 @@ async def bakamitai(ctx, *args):
                 imageReq.raw.decode_content = True
                 shutil.copyfileobj(imageReq.raw, f)
     if os.path.exists(filName) == True:
-        ctx.message.add_reaction('✅')
+        await ctx.message.add_reaction('✅')
         im = Image.open(filName)
         im = im.resize((256, 256))
         im.save(filName)
         im.close()
         batchFileLocation = 'MLDeepFake/first-order-model'
-        batchFileFullPath = os.path.join(batchFileLocation, 'Bakamitai.bat')
-        p = subprocess.Popen(os.path.abspath(batchFileFullPath), cwd = batchFileLocation)
-        p.wait()
+        batchFileFullPath = os.path.join(batchFileLocation, 'runDeepFake.bat')
+        p = subprocess.Popen([os.path.abspath(batchFileFullPath), f'resources/{alias}.mp4', f'resources/{alias}.mp3'], cwd = batchFileLocation)
+        p.wait(180)
         discordFil = discord.File(f"MLDeepFake/first-order-model/finalResult.mp4")
         await ctx.send(file = discordFil)
     else:
@@ -77,6 +79,4 @@ async def bakamitai(ctx, *args):
             raise
 
 CLIENT.run(TOKEN)  # turn bot on -- buy the bot dinner prior to this step
-
-#UTILITIES.processGifImage('resources/sample.gif', 1, 0)
 
