@@ -23,13 +23,13 @@ class customClient(discord.Client):
 
         print(f'{message.content}')
         if message.content.lower().find('crayon eater') > -1:
-            await message.guild.me.edit(nick="Dmg04")
+            await message.guild.me.edit(nick="dope")
             with open(AvatarFILE, 'rb') as f:
                 image = f.read()
             await self.user.edit(avatar=image)
             f.close()
             MentionAuth = message.author.mention
-            DmgResponse = f"{MentionAuth} Crayon Eater is a Slur\n{MentionAuth} Crayon Eater is a SLUR\n{MentionAuth} CRAYON EATER IS A SLUR\n"
+            DmgResponse = f"{MentionAuth} Crayon Eater is Not a nice word\n{MentionAuth} Crayon Eater is Not a nice word\n{MentionAuth} CRAYON EATER IS NOT A NICE WORD\n"
             await message.channel.send(DmgResponse)
 
         if message.content.lower().find('!resetd') > -1:
